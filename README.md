@@ -9,12 +9,13 @@ Nick
 Q3: addCustomizedModel
 Q4: deleteBaseModel
 Q7: topNDurationConfig
+Testing
 
 Tony
 Q5: listInternetService
 Q6: countCustomizedModel
 Q8: listBaseModelKeyWord
-Testing + Documentation
+Documentation
 
 ▶️ Running the Program
 Every function is called from the command line:
