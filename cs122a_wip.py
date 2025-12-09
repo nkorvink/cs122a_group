@@ -4,6 +4,26 @@ from mysql.connector import Error
 import csv
 import os
 
+# =======================================
+# CS122A Project 
+# =======================================
+# Niko:
+#   - Q1: import_data
+#   - Q2: insertAgentClient
+#   - Q9: printNL2SQLresult (+ NL2SQL CSV creation)
+#
+# Nick:
+#   - Q3: addCustomizedModel
+#   - Q4: deleteBaseModel
+#   - Q7: topNDurationConfig
+#
+# Tony:
+#   - Q5: listInternetService
+#   - Q6: countCustomizedModel
+#   - Q8: listBaseModelKeyWord
+#   - Testing + README/documentation
+# =======================================
+
 # Database configuration
 DB_CONFIG = {
     'host': 'localhost',
@@ -23,7 +43,9 @@ def get_db_connection():
         print(f"Error connecting to database: {e}")
         return None
 
-# Q1: Import Data 
+# =======================================
+# Q1 — Import Data
+# =======================================
 def import_data(folder_name):
     """
     Delete existing tables, create new tables (DDL), and import CSV data.
@@ -185,6 +207,78 @@ def import_data(folder_name):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         print("Fail")
+
+# =======================================
+# Q2 — insertAgentClient
+# =======================================
+def insertAgentClient(uid, username, email, card_holder_name, expiration_date, card_number, cvv, zip):
+    # TODO: implement actual logic
+    print("Success placeholder for Q2")
+    return
+
+
+# =======================================
+# Q3 — addCustomizedModel
+# =======================================
+def addCustomizedModel(bmid, mid):
+    # TODO: implement actual logic
+    print("Success placeholder for Q3")
+    return
+
+
+# =======================================
+# Q4 — deleteBaseModel
+# =======================================
+def deleteBaseModel(bmid):
+    # TODO: implement actual logic
+    print("Success placeholder for Q4")
+    return
+
+
+# =======================================
+# Q5 — listInternetService - TONY
+# =======================================
+def listInternetService(bmid):
+    # TODO: implement Q5 logic
+    print("Success placeholder for Q5")
+    return
+
+
+# =======================================
+# Q6 — countCustomizedModel - TONY
+# =======================================
+def countCustomizedModel():
+    # TODO: implement Q6
+    print("Success placeholder for Q6")
+    return
+
+
+# =======================================
+# Q7 — topNDurationConfig
+# =======================================
+def topNDurationConfig(uid, N):
+    # TODO: implement Q7 logic
+    print("Success placeholder for Q7")
+    return
+
+
+# =======================================
+# Q8 — listBaseModelKeyWord - TONY
+# =======================================
+def listBaseModelKeyWord(keyword):
+    # TODO: implement Q8 logic
+    print("Success placeholder for Q8")
+    return
+
+
+# =======================================
+# Q9 — printNL2SQLresult
+# =======================================
+def printNL2SQLresult(filename):
+    # TODO: implement Q9
+    print("Success placeholder for Q9")
+    return
+
 
 # Main Entry Point (Only recognizes 'import')
 def main():
