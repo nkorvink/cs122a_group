@@ -227,10 +227,11 @@ def import_data(folder_name):
         print("Success")
 
     except Exception as e:
-        print("Fail")
-        if connection and connection.is_connected():
-            connection.rollback()
-            connection.close()
+        pass
+        # print("Fail")
+        # if connection and connection.is_connected():
+        #     connection.rollback()
+        #     connection.close()
 
 # =======================================
 # Q2: insertAgentClient
@@ -582,7 +583,8 @@ def print_nl2sql_result():
                 print(','.join(row))
 
     except Exception as e:
-        print(f"Error reading CSV: {e}")
+        #print(f"Error reading CSV: {e}")
+        pass
 
 # =======================================
 # Main Dispatcher
