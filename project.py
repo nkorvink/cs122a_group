@@ -282,7 +282,7 @@ def insert_agent_client(uid, username, email, card_number, card_holder,
         """
         cursor.execute(
             client_query,
-            (uid, interests, card_holder, expiration_date, card_number, cvv, zip)
+            (uid, interests, card_holder, expiration_date, card_number, cvv, zip_code)
         )
 
         # Insert interests into Client_Interests one by one
