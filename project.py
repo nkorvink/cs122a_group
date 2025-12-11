@@ -136,9 +136,9 @@ def import_data(folder_name):
             CREATE TABLE AgentClient (
                 uid INT PRIMARY KEY,
                 interests TEXT,
-                cardholder TEXT NOT NULL,
-                expire DATE NOT NULL,
-                cardno BIGINT NOT NULL,
+                cardholder_name TEXT NOT NULL,
+                expiration_date DATE NOT NULL,
+                card_number BIGINT NOT NULL,
                 cvv INT NOT NULL,
                 zip INT NOT NULL,
                 FOREIGN KEY (uid) REFERENCES User(uid) ON DELETE CASCADE
