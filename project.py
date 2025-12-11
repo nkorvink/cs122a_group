@@ -275,12 +275,12 @@ def insert_agent_client(uid, username, email, card_number, card_holder,
         # Insert into AgentClient
         client_query = """
             INSERT INTO AgentClient
-                         (uid, card_number, card_holder_name, expiration_date, cvv, zip, interests)
+                         (uid, interests, card_holder_name, expiration_date, card_number, cvv, zip)
                          VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         cursor.execute(
             client_query,
-            (uid, card_number, card_holder, expiration_date, cvv, zip_code, interests)
+            (uid, interests, card_holder, expiration_date, card_number, cvv, zip)
         )
 
         # Insert interests into Client_Interests one by one
