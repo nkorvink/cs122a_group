@@ -411,7 +411,7 @@ def list_internet_service(bmid):
             FROM InternetService i
             JOIN BaseModelUtilization b ON i.sid = b.sid
             WHERE b.bmid = %s
-            ORDER BY i.provider ASC
+            ORDER BY i.sid ASC
         """
 
         result = execute_query(connection, query, (bmid,), fetch=True)
