@@ -415,9 +415,8 @@ def list_internet_service(bmid):
         result = execute_query(connection, query, (bmid,), fetch=True)
         connection.close()
 
-        if result:
-            for row in result:
-                print(','.join(str(col) for col in row))
+        for row in result or []:
+            print(','.join(str(col) for col in row))
 
     finally:
         if connection and connection.is_connected():
@@ -459,9 +458,8 @@ def count_customized_model(*bmids):
         result = execute_query(connection, query, bmids, fetch=True)
         connection.close()
 
-        if result:
-            for row in result:
-                print(','.join(str(col) for col in row))
+        for row in result or []:
+            print(','.join(str(col) for col in row))
 
     except Error:
         if connection and connection.is_connected():
@@ -502,9 +500,8 @@ def top_n_duration_config(uid, n):
         result = execute_query(connection, query, (uid, n), fetch=True)
         connection.close()
 
-        if result:
-            for row in result:
-                print(','.join(str(col) for col in row))
+        for row in result or []:
+            print(','.join(str(col) for col in row))
 
     except Error:
         if connection and connection.is_connected():
@@ -548,9 +545,8 @@ def list_base_model_keyword(keyword):
         result = execute_query(connection, query, (keyword_pattern,), fetch=True)
         connection.close()
 
-        if result:
-            for row in result:
-                print(','.join(str(col) for col in row))
+        for row in result or []:
+            print(','.join(str(col) for col in row))
 
     except Error:
         if connection and connection.is_connected():
