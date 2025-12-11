@@ -217,7 +217,6 @@ def import_data(folder_name):
                     if not header:
                         continue
 
-                    # Normalize header names (strip spaces)
                     header = [h.strip() for h in header]
 
                     columns = ','.join(header)
@@ -225,7 +224,6 @@ def import_data(folder_name):
                     insert_query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
 
                     for row in csv_reader:
-                        # Convert 'NULL' or empty strings to None
                         row = [None if val in ('NULL', '') else val for val in row]
                         cursor.execute(insert_query, row)
 
