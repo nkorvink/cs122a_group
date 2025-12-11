@@ -448,11 +448,11 @@ def list_internet_service(bmid):
 
     try:
         query = """
-            SELECT uid, cid, label, content, duration
-            FROM ModelConfiguration
-            WHERE uid = %s
-            ORDER BY duration DESC, cid ASC
-            LIMIT %s
+            SELECT i.sid, i.endpoints, i.provider
+            FROM ModelServices ms
+            JOIN InternetService i ON ms.sid = i.sid
+            WHERE ms.bmid = %s
+            ORDER BY i.provider ASC
         """
 
         result = execute_query(connection, query, (bmid,), fetch=True)
