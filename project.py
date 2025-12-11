@@ -576,10 +576,10 @@ def list_base_model_keyword(keyword):
         query = """
             SELECT DISTINCT b.bmid, i.sid, i.provider, l.domain
             FROM BaseModel b
-            JOIN BaseModelUtilization u USING (bmid)
-            JOIN InternetService i USING (sid)
-            JOIN LLMService l USING (sid)
-            WHERE l.domain LIKE ?
+            JOIN ModelServices ms ON b.bmid = ms.bmid
+            JOIN InternetService i ON ms.sid = i.sid
+            JOIN LLMService l ON i.sid = l.sid
+            WHERE l.domain LIKE %s
             ORDER BY b.bmid ASC
             LIMIT 5
         """
