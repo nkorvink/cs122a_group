@@ -115,77 +115,117 @@ def import_data(folder_name):
 
         # Create tables based on the project schema
         create_tables = [
-            """CREATE TABLE User (
+        """
+            CREATE TABLE User (
                 uid INT PRIMARY KEY,
-                username VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL UNIQUE
-            )""",
-            """CREATE TABLE AgentCreator (
+                email TEXT NOT NULL,
+                username TEXT NOT NULL
+            )
+        """,
+
+        """
+            CREATE TABLE AgentCreator (
                 uid INT PRIMARY KEY,
-                payout_account VARCHAR(255) NOT NULL,
+                payout TEXT,
                 bio TEXT,
                 FOREIGN KEY (uid) REFERENCES User(uid) ON DELETE CASCADE
-            )""",
-            """CREATE TABLE AgentClient (
+            )
+        """,
+
+        """
+            CREATE TABLE AgentClient (
                 uid INT PRIMARY KEY,
                 interests TEXT,
-                card_holder_name VARCHAR(255) NOT NULL,
-                expiration_date DATE NOT NULL,
-                card_number BIGINT NOT NULL,
+                cardholder TEXT NOT NULL,
+                expire DATE NOT NULL,
+                cardno BIGINT NOT NULL,
                 cvv INT NOT NULL,
                 zip INT NOT NULL,
                 FOREIGN KEY (uid) REFERENCES User(uid) ON DELETE CASCADE
-            )""",
-            """CREATE TABLE Client_Interests (
+            )
+        """,
+
+        """
+            CREATE TABLE Client_Interests (
                 uid INT,
                 interest VARCHAR(255),
                 PRIMARY KEY (uid, interest),
                 FOREIGN KEY (uid) REFERENCES AgentClient(uid) ON DELETE CASCADE
-            )""",
-            """CREATE TABLE InternetService (
+            )
+        """,
+
+        """
+            CREATE TABLE InternetService (
                 sid INT PRIMARY KEY,
-                endpoint VARCHAR(500) NOT NULL,
-                provider VARCHAR(255) NOT NULL
-            )""",
-            """CREATE TABLE LLMService (
+                provider TEXT NOT NULL,
+                endpoints TEXT NOT NULL
+            )
+        """,
+
+        """
+            CREATE TABLE LLMService (
                 sid INT PRIMARY KEY,
-                domain VARCHAR(255),
+                domain TEXT,
                 FOREIGN KEY (sid) REFERENCES InternetService(sid) ON DELETE CASCADE
-            )""",
-            """CREATE TABLE DataStorageService (
+            )
+        """,
+        """
+            CREATE TABLE DataStorage (
                 sid INT PRIMARY KEY,
-                type VARCHAR(255),
+                type TEXT,
                 FOREIGN KEY (sid) REFERENCES InternetService(sid) ON DELETE CASCADE
-            )""",
-            """CREATE TABLE BaseModel (
+            )
+        """,
+
+        """
+            CREATE TABLE BaseModel (
                 bmid INT PRIMARY KEY,
-                uid INT NOT NULL,
-                description TEXT,
-                FOREIGN KEY (uid) REFERENCES AgentCreator(uid) ON DELETE CASCADE
-            )""",
-            """CREATE TABLE BaseModelUtilization (
+                creator_uid INT NOT NULL,
+                description TEXT NOT NULL,
+                FOREIGN KEY (creator_uid) REFERENCES AgentCreator(uid) ON DELETE CASCADE
+            )
+        """,
+
+        """
+            CREATE TABLE CustomizedModel (
                 bmid INT,
-                sid INT,
+                mid INT,
+                PRIMARY KEY (bmid, mid),
+                FOREIGN KEY (bmid) REFERENCES BaseModel(bmid) ON DELETE CASCADE
+            )
+        """,
+
+        """
+            CREATE TABLE Configuration (
+                cid INT PRIMARY KEY,
+                client_uid INT NOT NULL,
+                content TEXT NOT NULL,
+                labels TEXT NOT NULL,
+                FOREIGN KEY (client_uid) REFERENCES AgentClient(uid) ON DELETE CASCADE
+            )
+        """,
+
+        """
+            CREATE TABLE ModelServices (
+                bmid INT NOT NULL,
+                sid INT NOT NULL,
                 version INT NOT NULL,
                 PRIMARY KEY (bmid, sid),
                 FOREIGN KEY (bmid) REFERENCES BaseModel(bmid) ON DELETE CASCADE,
                 FOREIGN KEY (sid) REFERENCES InternetService(sid) ON DELETE CASCADE
-            )""",
-            """CREATE TABLE CustomizedModel (
+            )
+        """,
+        """
+            CREATE TABLE ModelConfigurations (
                 bmid INT NOT NULL,
-                mid INT PRIMARY KEY,
-                FOREIGN KEY (bmid) REFERENCES BaseModel(bmid) ON DELETE CASCADE
-            )""",
-            """CREATE TABLE ModelConfiguration (
-                cid INT PRIMARY KEY,
-                uid INT NOT NULL,
                 mid INT NOT NULL,
-                label VARCHAR(255),
-                content TEXT,
-                duration INT,
-                FOREIGN KEY (uid) REFERENCES AgentClient(uid) ON DELETE CASCADE,
-                FOREIGN KEY (mid) REFERENCES CustomizedModel(mid) ON DELETE CASCADE
-            )"""
+                cid INT NOT NULL,
+                duration INT NOT NULL,
+                PRIMARY KEY (bmid, mid, cid),
+                FOREIGN KEY (bmid, mid) REFERENCES CustomizedModel(bmid, mid) ON DELETE CASCADE,
+                FOREIGN KEY (cid) REFERENCES Configuration(cid) ON DELETE CASCADE
+            )
+        """
         ]
 
         for create_query in create_tables:
@@ -201,11 +241,12 @@ def import_data(folder_name):
             ('Client_Interests.csv', 'Client_Interests'),
             ('InternetService.csv', 'InternetService'),
             ('LLMService.csv', 'LLMService'),
-            ('DataStorageService.csv', 'DataStorageService'),
+            ('DataStorage.csv', 'DataStorage'),
             ('BaseModel.csv', 'BaseModel'),
-            ('BaseModelUtilization.csv', 'BaseModelUtilization'),
             ('CustomizedModel.csv', 'CustomizedModel'),
-            ('ModelConfiguration.csv', 'ModelConfiguration'),
+            ('Configuration.csv', 'Configuration'),
+            ('ModelServices.csv', 'ModelServices'),
+            ('ModelConfigurations.csv', 'ModelConfigurations'),
         ]
 
         for csv_file, table_name in csv_tables:
@@ -546,7 +587,6 @@ def list_base_model_keyword(keyword):
         keyword_pattern = f"%{keyword}%"
         result = execute_query(connection, query, (keyword_pattern,), fetch=True)
         connection.close()
-        print("AA")
         for row in result or []:
             print(','.join(str(col) for col in row))
 
