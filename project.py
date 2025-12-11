@@ -136,7 +136,7 @@ def import_data(folder_name):
             CREATE TABLE AgentClient (
                 uid INT PRIMARY KEY,
                 interests TEXT,
-                cardholder_name TEXT NOT NULL,
+                card_holder_name TEXT NOT NULL,
                 expiration_date DATE NOT NULL,
                 card_number BIGINT NOT NULL,
                 cvv INT NOT NULL,
