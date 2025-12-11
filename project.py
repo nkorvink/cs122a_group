@@ -213,18 +213,12 @@ def import_data(folder_name):
             if os.path.exists(file_path):
                 with open(file_path, 'r', encoding='utf-8') as f:
                     csv_reader = csv.reader(f)
-                    header = next(csv_reader, None)
-                    if not header:
-                        continue
-
-                    header = [h.strip() for h in header]
-
-                    columns = ','.join(header)
-                    placeholders = ','.join(['%s'] * len(header))
-                    insert_query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
-
+                    next(csv_reader, None)  # skip header
                     for row in csv_reader:
+                        # Convert 'NULL' or empty strings to None
                         row = [None if val in ('NULL', '') else val for val in row]
+                        placeholders = ','.join(['%s'] * len(row))
+                        insert_query = f"INSERT INTO {table_name} VALUES ({placeholders})"
                         cursor.execute(insert_query, row)
 
         connection.commit()
