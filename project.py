@@ -411,7 +411,7 @@ def list_internet_service(bmid):
             FROM InternetService i
             JOIN BaseModelUtilization b ON i.sid = b.sid
             WHERE b.bmid = %s
-            ORDER BY i.sid ASC
+            ORDER BY i.provider ASC
         """
 
         result = execute_query(connection, query, (bmid,), fetch=True)
@@ -537,9 +537,8 @@ def list_base_model_keyword(keyword):
             FROM BaseModel b
             JOIN BaseModelUtilization u ON b.bmid = u.bmid
             JOIN InternetService i ON u.sid = i.sid
-            LEFT JOIN LLMService l ON i.sid = l.sid
-            WHERE l.domain IS NOT NULL
-            AND l.domain LIKE %s
+            JOIN LLMService l ON i.sid = l.sid
+            WHERE l.domain LIKE %s
             ORDER BY b.bmid ASC
             LIMIT 5
         """
