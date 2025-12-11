@@ -270,8 +270,10 @@ def insert_agent_client(uid, username, email, card_number, card_holder,
 
         # Insert into User
         user_query = "INSERT INTO User (uid, username, email) VALUES (%s, %s, %s)"
-        cursor.execute(user_query, (uid, username, email))
-
+        try:
+            cursor.execute(user_query, (uid, username, email))
+        except:
+            pass
         # Insert into AgentClient
         client_query = """
             INSERT INTO AgentClient
