@@ -492,10 +492,10 @@ def top_n_duration_config(uid, n):
 
     try:
         query = """
-            SELECT uid, cid, label, content, duration
+            SELECT cid, label, content, duration
             FROM ModelConfiguration
             WHERE uid = %s
-            ORDER BY duration DESC
+            ORDER BY duration DESC, cid ASC
             LIMIT %s
         """
 
