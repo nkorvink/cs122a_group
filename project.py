@@ -546,7 +546,7 @@ def list_base_model_keyword(keyword):
         keyword_pattern = f"%{keyword}%"
         result = execute_query(connection, query, (keyword_pattern,), fetch=True)
         connection.close()
-
+        print("AA")
         for row in result or []:
             print(','.join(str(col) for col in row))
 
