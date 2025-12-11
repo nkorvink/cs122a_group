@@ -54,7 +54,7 @@ def execute_query(connection, query, params=None, fetch=False):
     try:
         cursor = connection.cursor()
         cursor.execute(query, params) if params else cursor.execute(query)
-        
+
         if fetch:
             result = cursor.fetchall()
             cursor.close()
@@ -89,13 +89,13 @@ def import_data(folder_name):
     if not connection:
         print("Fail")
         return
-    
+
     try:
         cursor = connection.cursor()
-        
+
         # Drop existing tables (in correct order to handle foreign keys)
         drop_tables = [
-            "SET FOREIGN_KEY_CHECKS = 0", 
+            "SET FOREIGN_KEY_CHECKS = 0",
             "DROP TABLE IF EXISTS ModelConfiguration",
             "DROP TABLE IF EXISTS CustomizedModel",
             "DROP TABLE IF EXISTS BaseModelUtilization",
@@ -103,22 +103,22 @@ def import_data(folder_name):
             "DROP TABLE IF EXISTS LLMService",
             "DROP TABLE IF EXISTS DataStorageService",
             "DROP TABLE IF EXISTS InternetService",
-            "DROP TABLE IF EXISTS Client_Interests", 
+            "DROP TABLE IF EXISTS Client_Interests",
             "DROP TABLE IF EXISTS AgentClient",
             "DROP TABLE IF EXISTS AgentCreator",
             "DROP TABLE IF EXISTS User",
-            "SET FOREIGN_KEY_CHECKS = 1" 
+            "SET FOREIGN_KEY_CHECKS = 1"
         ]
-        
+
         for drop_query in drop_tables:
             cursor.execute(drop_query)
-        
+
         # Create tables based on the project schema
         create_tables = [
             """CREATE TABLE User (
                 uid INT PRIMARY KEY,
                 username VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL UNIQUE 
+                email VARCHAR(255) NOT NULL UNIQUE
             )""",
             """CREATE TABLE AgentCreator (
                 uid INT PRIMARY KEY,
@@ -139,7 +139,7 @@ def import_data(folder_name):
             """CREATE TABLE Client_Interests (
                 uid INT,
                 interest VARCHAR(255),
-                PRIMARY KEY (uid, interest), 
+                PRIMARY KEY (uid, interest),
                 FOREIGN KEY (uid) REFERENCES AgentClient(uid) ON DELETE CASCADE
             )""",
             """CREATE TABLE InternetService (
@@ -159,7 +159,7 @@ def import_data(folder_name):
             )""",
             """CREATE TABLE BaseModel (
                 bmid INT PRIMARY KEY,
-                uid INT NOT NULL, 
+                uid INT NOT NULL,
                 description TEXT,
                 FOREIGN KEY (uid) REFERENCES AgentCreator(uid) ON DELETE CASCADE
             )""",
@@ -187,18 +187,18 @@ def import_data(folder_name):
                 FOREIGN KEY (mid) REFERENCES CustomizedModel(mid) ON DELETE CASCADE
             )"""
         ]
-        
+
         for create_query in create_tables:
             cursor.execute(create_query)
-        
+
         connection.commit()
-        
+
         # Load CSV data into tables
         csv_tables = [
             ('User.csv', 'User'),
             ('AgentCreator.csv', 'AgentCreator'),
-            ('AgentClient.csv', 'AgentClient'), 
-            ('Client_Interests.csv', 'Client_Interests'), 
+            ('AgentClient.csv', 'AgentClient'),
+            ('Client_Interests.csv', 'Client_Interests'),
             ('InternetService.csv', 'InternetService'),
             ('LLMService.csv', 'LLMService'),
             ('DataStorageService.csv', 'DataStorageService'),
@@ -207,7 +207,7 @@ def import_data(folder_name):
             ('CustomizedModel.csv', 'CustomizedModel'),
             ('ModelConfiguration.csv', 'ModelConfiguration'),
         ]
-        
+
         for csv_file, table_name in csv_tables:
             file_path = os.path.join(folder_name, csv_file)
             if os.path.exists(file_path):
@@ -220,12 +220,12 @@ def import_data(folder_name):
                         placeholders = ','.join(['%s'] * len(row))
                         insert_query = f"INSERT INTO {table_name} VALUES ({placeholders})"
                         cursor.execute(insert_query, row)
-                            
+
         connection.commit()
         cursor.close()
         connection.close()
         print("Success")
-        
+
     except Exception as e:
         print("Fail")
         if connection and connection.is_connected():
@@ -240,7 +240,7 @@ def import_data(folder_name):
 # Output: "Success" or "Fail"
 # =======================================
 
-def insert_agent_client(uid, username, email, card_number, card_holder, 
+def insert_agent_client(uid, username, email, card_number, card_holder,
                         expiration_date, cvv, zip_code, interests):
     """
     Insert a new agent client, including user info, payment info, and interests.
@@ -264,37 +264,37 @@ def insert_agent_client(uid, username, email, card_number, card_holder,
     if not connection:
         print("Fail")
         return
-    
+
     try:
         cursor = connection.cursor()
-        
+
         # Insert into User
         user_query = "INSERT INTO User (uid, username, email) VALUES (%s, %s, %s)"
         cursor.execute(user_query, (uid, username, email))
-        
+
         # Insert into AgentClient
         client_query = """
-            INSERT INTO AgentClient 
-                         (uid, card_number, card_holder_name, expiration_date, cvv, zip, interests) 
+            INSERT INTO AgentClient
+                         (uid, card_number, card_holder_name, expiration_date, cvv, zip, interests)
                          VALUES (%s, %s, %s, %s, %s, %s, %s)
         """
         cursor.execute(
-            client_query, 
+            client_query,
             (uid, card_number, card_holder, expiration_date, cvv, zip_code, interests)
         )
-        
+
         # Insert interests into Client_Interests one by one
         if interests:
             interest_list = [i.strip() for i in re.split(r'[;,]', interests) if i.strip()]
             interest_query = "INSERT INTO Client_Interests (uid, interest) VALUES (%s, %s)"
             for interest in interest_list:
                 cursor.execute(interest_query, (uid, interest))
-        
+
         connection.commit()
         cursor.close()
         connection.close()
         print("Success")
-        
+
     except Error:
         print("Fail")
         if connection and connection.is_connected():
@@ -324,7 +324,7 @@ def add_customized_model(mid, bmid):
     if not connection:
         print("Fail")
         return
-    
+
     try:
         cursor = connection.cursor()
         query = "INSERT INTO CustomizedModel (mid, bmid) VALUES (%s, %s)"
@@ -333,7 +333,7 @@ def add_customized_model(mid, bmid):
         cursor.close()
         connection.close()
         print("Success")
-        
+
     except Error:
         print("Fail")
         if connection and connection.is_connected():
@@ -362,7 +362,7 @@ def delete_base_model(bmid):
     if not connection:
         print("Fail")
         return
-    
+
     try:
         cursor = connection.cursor()
         cursor.execute("DELETE FROM BaseModel WHERE bmid = %s", (bmid,))
@@ -370,7 +370,7 @@ def delete_base_model(bmid):
         cursor.close()
         connection.close()
         print("Success")
-        
+
     except Error:
         print("Fail")
         if connection and connection.is_connected():
@@ -398,7 +398,7 @@ def list_internet_service(bmid):
     connection = get_db_connection()
     if not connection:
         return
-    
+
     try:
         query = """
             SELECT i.sid, i.endpoint, i.provider
@@ -407,15 +407,15 @@ def list_internet_service(bmid):
             WHERE b.bmid = %s
             ORDER BY i.provider ASC
         """
-        
+
         result = execute_query(connection, query, (bmid,), fetch=True)
         connection.close()
-        
+
         if result:
             for row in result:
                 print(','.join(str(col) for col in row))
-        
-    except Error:
+
+    finally:
         if connection and connection.is_connected():
             connection.close()
 
@@ -440,7 +440,7 @@ def count_customized_model(*bmids):
     connection = get_db_connection()
     if not connection:
         return
-    
+
     try:
         placeholders = ','.join(['%s'] * len(bmids))
         query = f"""
@@ -451,14 +451,14 @@ def count_customized_model(*bmids):
             GROUP BY b.bmid, b.description
             ORDER BY b.bmid ASC
         """
-        
+
         result = execute_query(connection, query, bmids, fetch=True)
         connection.close()
-        
+
         if result:
             for row in result:
                 print(','.join(str(col) for col in row))
-        
+
     except Error:
         if connection and connection.is_connected():
             connection.close()
@@ -485,7 +485,7 @@ def top_n_duration_config(uid, n):
     connection = get_db_connection()
     if not connection:
         return
-    
+
     try:
         query = """
             SELECT uid, cid, label, content, duration
@@ -494,14 +494,14 @@ def top_n_duration_config(uid, n):
             ORDER BY duration DESC
             LIMIT %s
         """
-        
+
         result = execute_query(connection, query, (uid, n), fetch=True)
         connection.close()
-        
+
         if result:
             for row in result:
                 print(','.join(str(col) for col in row))
-        
+
     except Error:
         if connection and connection.is_connected():
             connection.close()
@@ -527,27 +527,27 @@ def list_base_model_keyword(keyword):
     connection = get_db_connection()
     if not connection:
         return
-    
+
     try:
         query = """
             SELECT DISTINCT b.bmid, i.sid, i.provider, l.domain
             FROM BaseModel b
             JOIN BaseModelUtilization u ON b.bmid = u.bmid
             JOIN InternetService i ON u.sid = i.sid
-            JOIN LLMService l ON i.sid = l.sid 
+            JOIN LLMService l ON i.sid = l.sid
             WHERE l.domain LIKE %s
             ORDER BY b.bmid ASC
             LIMIT 5
         """
-        
+
         keyword_pattern = f"%{keyword}%"
         result = execute_query(connection, query, (keyword_pattern,), fetch=True)
         connection.close()
-        
+
         if result:
             for row in result:
                 print(','.join(str(col) for col in row))
-        
+
     except Error:
         if connection and connection.is_connected():
             connection.close()
@@ -570,17 +570,17 @@ def print_nl2sql_result():
         Prints each CSV row as-is.
     """
     csv_file = 'nl2sql_results.csv'
-    
+
     try:
         if not os.path.exists(csv_file):
             print(f"Error: {csv_file} not found")
             return
-        
+
         with open(csv_file, 'r', encoding='utf-8') as f:
             csv_reader = csv.reader(f)
             for row in csv_reader:
                 print(','.join(row))
-        
+
     except Exception as e:
         print(f"Error reading CSV: {e}")
 
@@ -609,17 +609,17 @@ def main():
     if len(sys.argv) < 2:
         print("Usage: python3 project.py <function_name> [params...]")
         return
-    
+
     function_name = sys.argv[1]
     args = sys.argv[2:]
-    
+
     try:
         if function_name == "import":
             if len(args) < 1:
                 print("Usage: python3 project.py import [folderName:str]")
                 return
             import_data(args[0])
-        
+
         elif function_name == "insertAgentClient":
             if len(args) < 9:
                 print("Usage: python3 project.py insertAgentClient [uid:int] [username:str] ... [interests:str]")
@@ -635,32 +635,32 @@ def main():
                 int(args[7]),  # zip
                 args[8]        # interests
             )
-        
+
         elif function_name == "addCustomizedModel":
             add_customized_model(int(args[0]), int(args[1]))
-        
+
         elif function_name == "deleteBaseModel":
             delete_base_model(int(args[0]))
-        
+
         elif function_name == "listInternetService":
             list_internet_service(int(args[0]))
-        
+
         elif function_name == "countCustomizedModel":
             bmids = [int(arg) for arg in args]
             count_customized_model(*bmids)
-        
+
         elif function_name == "topNDurationConfig":
             top_n_duration_config(int(args[0]), int(args[1]))
-        
+
         elif function_name == "listBaseModelKeyWord":
             list_base_model_keyword(args[0])
-        
+
         elif function_name == "printNL2SQLresult":
             print_nl2sql_result()
-        
+
         else:
             print(f"Unknown function: {function_name}")
-            
+
     except IndexError:
         print("Error: Missing arguments for function.")
     except ValueError:
