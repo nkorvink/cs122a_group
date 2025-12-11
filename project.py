@@ -533,10 +533,11 @@ def top_n_duration_config(uid, n):
 
     try:
         query = """
-            SELECT uid, cid, label, content, duration
-            FROM ModelConfiguration
-            WHERE uid = %s
-            ORDER BY duration DESC, cid ASC
+            SELECT c.client_uid AS uid, c.cid,c.labels AS label, c.content, mc.duration
+            FROM ModelConfigurations mc
+            JOIN Configuration c ON mc.cid = c.cid
+            WHERE c.client_uid = %s
+            ORDER BY mc.duration DESC, c.cid ASC
             LIMIT %s
         """
 
