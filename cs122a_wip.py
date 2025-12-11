@@ -1,3 +1,7 @@
+"""
+CS122A Final Project - Agent Platform Database CLI
+"""
+
 import sys
 import mysql.connector
 from mysql.connector import Error
@@ -5,16 +9,25 @@ import csv
 import os
 import re
 
-# Database credentials
+# =======================================
+# Database Configuration
+# =======================================
+
 DB_CONFIG = {
     'host': 'localhost',
-    'user': 'test',
-    'password': 'password',
+    'user': 'test',        # change if your MySQL user is different
+    'password': 'password',  # change if your MySQL password is different
     'database': 'cs122a'
 }
 
 def get_db_connection():
-    """Get a database connection."""
+    """
+    Establish and return a database connection using DB_CONFIG.
+
+    Returns:
+        mysql.connector.connection.MySQLConnection | None:
+            A live connection object if successful, otherwise None.
+    """
     try:
         return mysql.connector.connect(**DB_CONFIG)
     except Error as e:
@@ -22,7 +35,22 @@ def get_db_connection():
         return None
 
 def execute_query(connection, query, params=None, fetch=False):
-    """Run a query and handle the result."""
+    """
+    Helper to execute a single SQL query.
+
+    Args:
+        connection: An open MySQL connection.
+        query (str): SQL query string with %s placeholders.
+        params (tuple | list | None): Values to bind to placeholders.
+        fetch (bool): If True, returns all fetched rows.
+                      If False, commits and returns True/False.
+
+    Returns:
+        - If fetch == True:
+            list[tuple] | None: Result rows, or None on error.
+        - If fetch == False:
+            bool: True on success, False on error.
+    """
     try:
         cursor = connection.cursor()
         cursor.execute(query, params) if params else cursor.execute(query)
@@ -39,9 +67,24 @@ def execute_query(connection, query, params=None, fetch=False):
         connection.rollback()
         return False if not fetch else None
 
-# Q1: Set up the database from scratch
+# =======================================
+# Q1: import_data
+# CLI name: "import"
+# Usage: python3 cs122a_wip.py import <folderName>
+# Output: "Success" or "Fail"
+# =======================================
+
 def import_data(folder_name):
-    """Drop existing tables, create fresh schema, load CSV data."""
+    """
+    Drop existing tables, recreate the schema, and load data from CSV files.
+
+    Args:
+        folder_name (str): Path to the folder containing all required CSVs.
+
+    Side effects:
+        - Modifies the database schema and data.
+        - Prints "Success" or "Fail".
+    """
     connection = get_db_connection()
     if not connection:
         print("Fail")
@@ -50,7 +93,7 @@ def import_data(folder_name):
     try:
         cursor = connection.cursor()
         
-        # Nuke everything
+        # Drop existing tables (in correct order to handle foreign keys)
         drop_tables = [
             "SET FOREIGN_KEY_CHECKS = 0", 
             "DROP TABLE IF EXISTS ModelConfiguration",
@@ -70,7 +113,7 @@ def import_data(folder_name):
         for drop_query in drop_tables:
             cursor.execute(drop_query)
         
-        # Build the schema
+        # Create tables based on the project schema
         create_tables = [
             """CREATE TABLE User (
                 uid INT PRIMARY KEY,
@@ -150,7 +193,7 @@ def import_data(folder_name):
         
         connection.commit()
         
-        # Load the data
+        # Load CSV data into tables
         csv_tables = [
             ('User.csv', 'User'),
             ('AgentCreator.csv', 'AgentCreator'),
@@ -170,8 +213,9 @@ def import_data(folder_name):
             if os.path.exists(file_path):
                 with open(file_path, 'r', encoding='utf-8') as f:
                     csv_reader = csv.reader(f)
-                    next(csv_reader, None)
+                    next(csv_reader, None)  # skip header
                     for row in csv_reader:
+                        # Convert 'NULL' or empty strings to None
                         row = [None if val in ('NULL', '') else val for val in row]
                         placeholders = ','.join(['%s'] * len(row))
                         insert_query = f"INSERT INTO {table_name} VALUES ({placeholders})"
@@ -188,10 +232,34 @@ def import_data(folder_name):
             connection.rollback()
             connection.close()
 
-# Q2: Add a new client with payment info and interests
+# =======================================
+# Q2: insertAgentClient
+# CLI name: "insertAgentClient"
+# Usage:
+#   python3 cs122a_wip.py insertAgentClient uid username email cardNumber cardHolder expirationDate cvv zip interests
+# Output: "Success" or "Fail"
+# =======================================
+
 def insert_agent_client(uid, username, email, card_number, card_holder, 
                         expiration_date, cvv, zip_code, interests):
-    """Create a new agent client with their payment details."""
+    """
+    Insert a new agent client, including user info, payment info, and interests.
+
+    Args:
+        uid (int): User/Client ID.
+        username (str): Username.
+        email (str): Email address.
+        card_number (int): Credit card number.
+        card_holder (str): Card holder's full name.
+        expiration_date (str): Expiration date (YYYY-MM-DD).
+        cvv (int): CVV code.
+        zip_code (int): ZIP/postal code.
+        interests (str): Comma- or semicolon-separated list of interests.
+
+    Side effects:
+        - Inserts into User, AgentClient, and Client_Interests.
+        - Prints "Success" or "Fail".
+    """
     connection = get_db_connection()
     if not connection:
         print("Fail")
@@ -200,17 +268,22 @@ def insert_agent_client(uid, username, email, card_number, card_holder,
     try:
         cursor = connection.cursor()
         
-        # Add user
+        # Insert into User
         user_query = "INSERT INTO User (uid, username, email) VALUES (%s, %s, %s)"
         cursor.execute(user_query, (uid, username, email))
         
-        # Add client with payment info
-        client_query = """INSERT INTO AgentClient 
+        # Insert into AgentClient
+        client_query = """
+            INSERT INTO AgentClient 
                          (uid, card_number, card_holder_name, expiration_date, cvv, zip, interests) 
-                         VALUES (%s, %s, %s, %s, %s, %s, %s)"""
-        cursor.execute(client_query, (uid, card_number, card_holder, expiration_date, cvv, zip_code, interests))
+                         VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(
+            client_query, 
+            (uid, card_number, card_holder, expiration_date, cvv, zip_code, interests)
+        )
         
-        # Break out interests into separate table
+        # Insert interests into Client_Interests one by one
         if interests:
             interest_list = [i.strip() for i in re.split(r'[;,]', interests) if i.strip()]
             interest_query = "INSERT INTO Client_Interests (uid, interest) VALUES (%s, %s)"
@@ -228,9 +301,25 @@ def insert_agent_client(uid, username, email, card_number, card_holder,
             connection.rollback()
             connection.close()
 
-# Q3: Create a customized version of a base model
+# =======================================
+# Q3: addCustomizedModel
+# CLI name: "addCustomizedModel"
+# Usage: python3 cs122a_wip.py addCustomizedModel mid bmid
+# Output: "Success" or "Fail"
+# =======================================
+
 def add_customized_model(mid, bmid):
-    """Add a new customized model based on an existing base model."""
+    """
+    Create a new customized model linked to an existing base model.
+
+    Args:
+        mid (int): Customized model ID.
+        bmid (int): Base model ID.
+
+    Side effects:
+        - Inserts into CustomizedModel.
+        - Prints "Success" or "Fail".
+    """
     connection = get_db_connection()
     if not connection:
         print("Fail")
@@ -251,9 +340,24 @@ def add_customized_model(mid, bmid):
             connection.rollback()
             connection.close()
 
-# Q4: Remove a base model (cascades to customized models)
+# =======================================
+# Q4: deleteBaseModel
+# CLI name: "deleteBaseModel"
+# Usage: python3 cs122a_wip.py deleteBaseModel bmid
+# Output: "Success" or "Fail"
+# =======================================
+
 def delete_base_model(bmid):
-    """Delete a base model and everything that depends on it."""
+    """
+    Delete a base model. CASCADE rules handle related rows.
+
+    Args:
+        bmid (int): Base model ID.
+
+    Side effects:
+        - Deletes from BaseModel (and dependent rows).
+        - Prints "Success" or "Fail".
+    """
     connection = get_db_connection()
     if not connection:
         print("Fail")
@@ -273,9 +377,24 @@ def delete_base_model(bmid):
             connection.rollback()
             connection.close()
 
-# Q5: Show all services used by a base model
+# =======================================
+# Q5: listInternetService
+# CLI name: "listInternetService"
+# Usage: python3 cs122a_wip.py listInternetService bmid
+# Output: CSV rows: sid,endpoint,provider
+# =======================================
+
 def list_internet_service(bmid):
-    """List internet services that a base model uses."""
+    """
+    List internet services utilized by a given base model.
+
+    Args:
+        bmid (int): Base model ID.
+
+    Output:
+        Prints each matching row as CSV:
+        sid,endpoint,provider
+    """
     connection = get_db_connection()
     if not connection:
         return
@@ -300,9 +419,24 @@ def list_internet_service(bmid):
         if connection and connection.is_connected():
             connection.close()
 
-# Q6: Count how many customized models exist for each base model
+# =======================================
+# Q6: countCustomizedModel
+# CLI name: "countCustomizedModel"
+# Usage: python3 cs122a_wip.py countCustomizedModel bmid1 [bmid2 ...]
+# Output: CSV rows: bmid,description,customizedModelCount
+# =======================================
+
 def count_customized_model(*bmids):
-    """Count customized models for given base model IDs."""
+    """
+    Count how many customized models exist for each given base model ID.
+
+    Args:
+        *bmids (int): One or more base model IDs.
+
+    Output:
+        Prints each row as CSV:
+        bmid,description,customizedModelCount
+    """
     connection = get_db_connection()
     if not connection:
         return
@@ -329,9 +463,25 @@ def count_customized_model(*bmids):
         if connection and connection.is_connected():
             connection.close()
 
-# Q7: Get the longest-running configs for a client
+# =======================================
+# Q7: topNDurationConfig
+# CLI name: "topNDurationConfig"
+# Usage: python3 cs122a_wip.py topNDurationConfig uid N
+# Output: CSV rows: uid,cid,label,content,duration
+# =======================================
+
 def top_n_duration_config(uid, n):
-    """Find the N longest duration configurations for a client."""
+    """
+    Return the top N configurations with the longest duration for a client.
+
+    Args:
+        uid (int): Client user ID.
+        n (int): Number of rows to return (top N).
+
+    Output:
+        Prints each row as CSV:
+        uid,cid,label,content,duration
+    """
     connection = get_db_connection()
     if not connection:
         return
@@ -356,9 +506,24 @@ def top_n_duration_config(uid, n):
         if connection and connection.is_connected():
             connection.close()
 
-# Q8: Find base models using LLM services with a specific keyword
+# =======================================
+# Q8: listBaseModelKeyWord
+# CLI name: "listBaseModelKeyWord"
+# Usage: python3 cs122a_wip.py listBaseModelKeyWord keyword
+# Output: CSV rows: bmid,sid,provider,domain (max 5 rows)
+# =======================================
+
 def list_base_model_keyword(keyword):
-    """List base models using LLM services whose domain matches the keyword."""
+    """
+    List base models that use LLM services whose domain contains a keyword.
+
+    Args:
+        keyword (str): Substring to match in LLMService.domain.
+
+    Output:
+        Prints up to 5 rows as CSV:
+        bmid,sid,provider,domain
+    """
     connection = get_db_connection()
     if not connection:
         return
@@ -387,9 +552,23 @@ def list_base_model_keyword(keyword):
         if connection and connection.is_connected():
             connection.close()
 
-# Q9: Dump the NL2SQL results
+# =======================================
+# Q9: printNL2SQLresult
+# CLI name: "printNL2SQLresult"
+# Usage: python3 cs122a_wip.py printNL2SQLresult
+# Output: CSV rows directly from nl2sql_results.csv
+# =======================================
+
 def print_nl2sql_result():
-    """Print the NL2SQL experiment results from CSV."""
+    """
+    Print the NL2SQL experiment results from a CSV file.
+
+    The file is expected to be named 'nl2sql_results.csv'
+    and located in the same directory as this script.
+
+    Output:
+        Prints each CSV row as-is.
+    """
     csv_file = 'nl2sql_results.csv'
     
     try:
@@ -405,8 +584,28 @@ def print_nl2sql_result():
     except Exception as e:
         print(f"Error reading CSV: {e}")
 
-# Main dispatcher
+# =======================================
+# Main Dispatcher
+# =======================================
+
 def main():
+    """
+    Parse command-line arguments and dispatch to the appropriate function.
+
+    Usage:
+        python3 cs122a_wip.py <functionName> [params...]
+
+    Supported functionName values:
+        - import
+        - insertAgentClient
+        - addCustomizedModel
+        - deleteBaseModel
+        - listInternetService
+        - countCustomizedModel
+        - topNDurationConfig
+        - listBaseModelKeyWord
+        - printNL2SQLresult
+    """
     if len(sys.argv) < 2:
         print("Usage: python3 project.py <function_name> [params...]")
         return
@@ -426,8 +625,15 @@ def main():
                 print("Usage: python3 project.py insertAgentClient [uid:int] [username:str] ... [interests:str]")
                 return
             insert_agent_client(
-                int(args[0]), args[1], args[2], int(args[3]), 
-                args[4], args[5], int(args[6]), int(args[7]), args[8]
+                int(args[0]),  # uid
+                args[1],       # username
+                args[2],       # email
+                int(args[3]),  # card_number
+                args[4],       # card_holder
+                args[5],       # expiration_date
+                int(args[6]),  # cvv
+                int(args[7]),  # zip
+                args[8]        # interests
             )
         
         elif function_name == "addCustomizedModel":
