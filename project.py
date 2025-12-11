@@ -408,9 +408,9 @@ def list_internet_service(bmid):
     try:
         query = """
             SELECT i.sid, i.endpoint, i.provider
-            FROM InternetService i
-            JOIN BaseModelUtilization b ON i.sid = b.sid
-            WHERE b.bmid = %s
+            FROM BaseModelUtilization b
+            JOIN InternetService i USING (sid)
+            WHERE b.bmid = ?
             ORDER BY i.provider ASC
         """
 
@@ -535,10 +535,10 @@ def list_base_model_keyword(keyword):
         query = """
             SELECT DISTINCT b.bmid, i.sid, i.provider, l.domain
             FROM BaseModel b
-            JOIN BaseModelUtilization u ON b.bmid = u.bmid
-            JOIN InternetService i ON u.sid = i.sid
-            JOIN LLMService l ON i.sid = l.sid
-            WHERE l.domain LIKE %s
+            JOIN BaseModelUtilization u USING (bmid)
+            JOIN InternetService i USING (sid)
+            JOIN LLMService l USING (sid)
+            WHERE l.domain LIKE ?
             ORDER BY b.bmid ASC
             LIMIT 5
         """
